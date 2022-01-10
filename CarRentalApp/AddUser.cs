@@ -1,0 +1,85 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace CarRentalApp
+{
+    public partial class AddUser : Form
+    {
+        private readonly CarRentalEntities _db;
+        private string hashed_password;
+
+        public ManageUsers _manageUsers;
+        public AddUser()
+        {
+            InitializeComponent();
+            _db = new CarRentalEntities();
+        }
+
+        public AddUser(ManageUsers manageUsers)
+        {
+            InitializeComponent();
+            _db = new CarRentalEntities();
+            _manageUsers = manageUsers;
+        }
+
+        private void AddUser_Load(object sender, EventArgs e)
+        {
+            var roles = _db.Roles.ToList();
+            cbRole.DataSource = roles;
+            cbRole.ValueMember = "id";
+            cbRole.DisplayMember = "name";
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void btnSubmit_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var username = tbUsername.Text;
+                var roleId = (int)cbRole.SelectedValue;
+
+                hashed_password = Utils.DefaultHashedPassword();
+
+                var user = new User
+                {
+                    username = username,
+                    password = hashed_password,
+                    isActive = true
+                };
+
+                _db.Users.Add(user);
+                _db.SaveChanges();
+
+                var userid = user.id;
+
+                var userRole = new UserRole
+                {
+                    roleid = roleId,
+                    userid = userid
+                };
+
+                _db.UserRoles.Add(userRole);
+                _db.SaveChanges();
+
+                MessageBox.Show("New User Added Successfully");
+                _manageUsers.PopulateGrid();
+                Close();
+            } catch (Exception)
+            {
+                MessageBox.Show("An Error Has Ocurred");
+            }
+        }
+    }
+}
